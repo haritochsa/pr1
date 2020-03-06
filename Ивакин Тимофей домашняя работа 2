@@ -1,0 +1,71 @@
+ #define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#define N 15
+#define M 15
+
+void matrica(int A[N][M])
+{
+for (int i = 0; i < N; ++i)
+for (int j = 0; j < M; ++j)
+if (i == 0 || j == 0 || i % (N - 1) == 0 || j % (M - 1) == 0)
+A[i][j] = 1;
+else
+A[i][j] = rand() % 2 ? rand() % 2 : 0;
+}
+
+void vivod(int A[N][M])
+{
+for (int i = 0; i < N; ++i)
+{
+for (int j = 0; j < M; ++j)
+printf("%d", A[i][j]);
+printf("\n");
+}
+
+}
+
+void massiv(int A[N][M], int w, int i, int j)
+{
+if (i < N && j < M)
+{
+if (A[i][j] == 0)
+{
+A[i][j] = w;
+massiv(A, w, i, j + 1);
+massiv(A, w, i, j - 1);
+massiv(A, w, i - 1, j);
+massiv(A, w, i + 1, j);
+
+}
+else if (A[i][j] == 1)
+{
+return;
+}
+}
+
+}
+
+
+int main()
+{
+int A[N][M];
+int q;
+int w;
+int e;
+printf("massiv:\n");
+matrica(A);
+vivod(A);
+printf("chislo:");
+scanf("%d", &q);
+printf("koordinati:");
+scanf("%d", &w);
+scanf("%d", &e);
+printf("massiv:\n");
+massiv(A, q, w, e);
+vivod(A);
+
+return 0;
+
+}
