@@ -1,0 +1,55 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <conio.h>
+#include <time.h>
+#define for_i for(int i = 0; i < n; i++)
+
+void swap(int* a, int* b)
+{
+int z = *a;
+*a = *b;
+*b = z;
+
+}
+
+void sort(int n, int* m)
+{
+int q = 0;
+for (int i = 0; i < n; i++)
+{
+for (int j = 1; j < (n - i); j++)
+{
+if (m[j] < m[j - 1])
+{
+swap(&m[j], &m[j - 1]);
+}
+q++;
+}
+}
+printf("Kolli4estvo sravnenii:");
+printf("%d\n", q);
+}
+
+
+
+int main()
+{
+int n;
+printf("Razmer massiva:");
+scanf("%d", &n);
+int* m = (int*)calloc(n, sizeof(int));
+printf("Massiv:");
+for_i
+{
+m[i] = rand() % 10;
+printf("%d ", m[i]);
+}
+printf("\n");
+sort(n, m);
+printf("Rezultat perestanovki:");
+for_i
+{
+printf("%d ", m[i]);
+}
+free(m);
+}
