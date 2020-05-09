@@ -1,0 +1,303 @@
+#define _CRT_SECURE_NO_DEPRECATE
+#include <png.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+/* Структура пиксела */
+
+struct pixel_t{
+uint8_t red;
+uint8_t green;
+uint8_t blue;
+uint8_t alpha;
+};
+
+/* Сама картинка */
+struct bitmap_t{
+struct pixel_t **pixel;
+int width;
+int height;
+};
+
+//Пемерешиваем
+int* shuffle(int size, int height) {
+int* arr = (int*)malloc(size*sizeof(int));
+double scale = height / size;
+double h = 0;
+for (int i = 0; i < size; i++) {
+arr[i] = h;
+h += scale;
+}
+
+for (int i = 0; i < size; i++) {
+for (int j = 0; j < size; j++) {
+int r1 = rand() % size, r2 = rand() % size;
+int temp = arr[r1];
+arr[r1] = arr[r2];
+arr[r2] = temp;
+}
+}
+
+return arr;
+}
+
+// "Зеркалим относительно центра по оси Oy. тк при отрисовке пнг у нас
+struct bitmap_t reverse(struct bitmap_t b) {
+struct bitmap_t temp;
+temp.pixel = b.pixel;
+temp.height = b.height;
+temp.width = b.width;
+for (int i = 0; i < temp.width; i++) {
+for (int j = 0; j < (temp.height / 2); j++) {
+struct pixel_t temp_pix = temp.pixel[j][i];
+temp.pixel[j][i] = temp.pixel[temp.height - j - 1][i];
+temp.pixel[temp.height - j - 1][i] = temp_pix;
+}
+}
+
+return temp;
+}
+/* Given "bitmap", this returns the pixel of bitmap at the point
+("x", "y"). */
+
+static struct pixel_t pixel_at(struct bitmap_t* bitmap, int x, int y)
+{
+return bitmap->pixel[x][y];
+}
+
+/* Write "bitmap" to a PNG file specified by "path"; returns 0 on
+success, non-zero on error. */
+
+static int save_png_to_file(struct bitmap_t* bitmap, const char* path)
+{
+FILE* fp;
+png_structp png_ptr = NULL;
+png_infop info_ptr = NULL;
+int x, y;
+png_byte** row_pointers = NULL;
+/* "status" contains the return value of this function. At first
+it is set to a value which means 'failure'. When the routine
+has finished its work, it is set to a value which means
+'success'. */
+int status = -1;
+/* The following number is set by trial and error only. I cannot
+see where it it is documented in the libpng manual.
+*/
+int pixel_size = 10;
+int depth = 8;
+
+fp = fopen(path, "wb");
+if (!fp) {
+goto fopen_failed;
+}
+
+png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+if (png_ptr == NULL) {
+goto png_create_write_struct_failed;
+}
+
+info_ptr = png_create_info_struct(png_ptr);
+if (info_ptr == NULL) {
+goto png_create_info_struct_failed;
+}
+
+/* Set up error handling. */
+
+if (setjmp(png_jmpbuf(png_ptr))) {
+goto png_failure;
+}
+
+/* Set image attributes. */
+
+png_set_IHDR(png_ptr,
+info_ptr,
+bitmap->width,
+bitmap->height,
+depth,
+PNG_COLOR_TYPE_RGBA,
+PNG_INTERLACE_NONE,
+PNG_COMPRESSION_TYPE_DEFAULT,
+PNG_FILTER_TYPE_DEFAULT);
+
+/* Initialize rows of PNG. */
+
+row_pointers = (png_byte**)png_malloc(png_ptr, bitmap->height * sizeof(png_byte*));
+for (y = 0; y < bitmap->height; ++y) {
+png_byte* row = (png_byte*)png_malloc(png_ptr, sizeof(uint8_t) * bitmap->width * pixel_size);
+row_pointers[y] = row;
+for (x = 0; x < bitmap->width; ++x) {
+struct pixel_t pixel = pixel_at(bitmap, y, x);
+*row++ = pixel.red;
+*row++ = pixel.green;
+*row++ = pixel.blue;
+*row++ = pixel.alpha;
+}
+}
+
+/* Write the image data to "fp". */
+png_init_io(png_ptr, fp);
+png_set_rows(png_ptr, info_ptr, row_pointers);
+png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+/* The routine has successfully written the file, so we set
+"status" to a value which indicates success. */
+
+status = 0;
+
+for (y = 0; y < bitmap->height; y++) {
+png_free(png_ptr, row_pointers[y]);
+}
+png_free(png_ptr, row_pointers);
+
+png_failure:
+png_create_info_struct_failed:
+png_destroy_write_struct(&png_ptr, &info_ptr);
+png_create_write_struct_failed:
+fclose(fp);
+fopen_failed:
+return status;
+}
+
+int main()
+{
+srand(time(NULL));
+struct bitmap_t table = {0, 10, 10};
+
+printf("Enter the path to save: ");
+char global_path[500];
+gets(global_path);
+
+int number_lines = 0, line_width = 0, counter = 0;
+printf("Enterthe number of values to sort: ");
+scanf("%d", &number_lines);
+printf("Enter the width of the line: ");
+ 
+scanf("%d", &line_width);
+
+table.width = line_width * number_lines;
+table.height = 600;
+table.pixel = (struct pixel_t**)malloc(table.height * sizeof(struct pixel_t*));
+for (int i = 0; i < table.height; i++) {
+table.pixel[i] = (struct pixel_t *)malloc(table.width * sizeof(struct pixel_t));
+}
+/* Create an image. */
+
+int sorted_c = 0;
+int swaps = 0;
+int* arr = (int*)malloc(number_lines * sizeof(int));
+arr = shuffle(number_lines, table.height);
+
+for (counter = 1; counter < number_lines; counter++) {
+for (int f = counter; f > 0 && arr[f - 1] > arr[f]; f--) {
+double temp_value_d = arr[f - 1];
+arr[f - 1] = arr[f];
+arr[f] = temp_value_d;
+swaps++;
+for (int i = 0; i < table.height; i++) {
+int index = 0;
+for (int j = 0; j < table.width; j++) {
+struct pixel_t temp;
+if (j && (j % line_width == 0)) index++;
+if (i <= arr[index]) {
+temp.red = 255;
+temp.green = 50;
+temp.blue = 50;
+temp.alpha = 255;
+}
+else {
+temp.red = 0;
+temp.green = 0;
+temp.blue = 0;
+temp.alpha = 0;
+}
+table.pixel[i][j] = temp;
+}
+}
+/* Write the image to a file 'table.png'. */
+
+}
+char full_name[500];
+for (int m = 0; m < strlen(global_path); m++)
+full_name[m] = global_path[m];
+int char_idx = strlen(global_path);
+full_name[char_idx++] = 't';
+full_name[char_idx++] = 'a';
+full_name[char_idx++] = 'b';
+full_name[char_idx++] = 'l';
+full_name[char_idx++] = 'e';
+full_name[char_idx] = '\0';
+for (int i = 0; i < table.height; i++) {
+for (int j = 0; j < sorted_c * line_width; j++) {
+if (i <= arr[j / line_width]) {
+table.pixel[i][j].red = 0;
+table.pixel[i][j].green = 100;
+table.pixel[i][j].blue = 0;
+table.pixel[i][j].alpha = 255;
+}
+else {
+table.pixel[i][j].red = 0;
+table.pixel[i][j].green = 0;
+table.pixel[i][j].blue = 0;
+table.pixel[i][j].alpha = 0;
+}
+if (i >= arr[j / line_width] - 15 && i <= arr[j / line_width]) {
+table.pixel[i][j].red = 0;
+table.pixel[i][j].green = 0;
+table.pixel[i][j].blue = 0;
+table.pixel[i][j].alpha = 255;
+}
+}
+}
+sorted_c++;
+char ex[5];
+int radix = 10;
+_itoa(counter, ex, radix);
+strcat(full_name, ex);
+strcat(full_name, ".png");
+table = reverse(table);
+save_png_to_file(&table, full_name);
+
+}
+
+
+for (int last = 0; last < 2; last++) {
+for (int i = 0; i < table.height; i++) {
+for (int j = 0; j < sorted_c * line_width; j++) {
+if (i <= arr[j / line_width]) {
+table.pixel[i][j].red = 107;
+table.pixel[i][j].green = 142;
+table.pixel[i][j].blue = 50;
+}
+else {
+table.pixel[i][j].red = 0;
+table.pixel[i][j].green = 0;
+table.pixel[i][j].blue = 0;
+}
+}
+}
+char full_name[500];
+for (int m = 0; m < strlen(global_path); m++)
+full_name[m] = global_path[m];
+int char_idx = strlen(global_path);
+full_name[char_idx++] = 't';
+full_name[char_idx++] = 'a';
+full_name[char_idx++] = 'b';
+full_name[char_idx++] = 'l';
+full_name[char_idx++] = 'e';
+full_name[char_idx] = '\0';
+char ex[5];
+int radix = 10;
+_itoa(counter, ex, radix);
+strcat(full_name, ex);
+strcat(full_name, ".png");
+table = reverse(table);
+save_png_to_file(&table, full_name);
+sorted_c++;
+}
+printf("NUMBER OF SWAPS: %d\n", swaps);
+
+free(table.pixel);
+free(arr);
+return 0;
+}
