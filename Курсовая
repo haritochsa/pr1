@@ -23,8 +23,9 @@ int height;
 //Пемерешиваем
 int* shuffle(int size, int height) {
 int* arr = (int*)malloc(size*sizeof(int));
+
 double scale = height / size;
-double h = 0;
+double h = scale;
 for (int i = 0; i < size; i++) {
 arr[i] = h;
 h += scale;
@@ -169,10 +170,12 @@ char global_path[500];
 gets(global_path);
 
 int number_lines = 0, line_width = 0, counter = 0;
-printf("Enterthe number of values to sort: ");
+
+Pixel.red
+pixel.red
+printf("Enter the number of values to sort: ");
 scanf("%d", &number_lines);
 printf("Enter the width of the line: ");
- 
 scanf("%d", &line_width);
 
 table.width = line_width * number_lines;
@@ -181,19 +184,28 @@ table.pixel = (struct pixel_t**)malloc(table.height * sizeof(struct pixel_t*));
 for (int i = 0; i < table.height; i++) {
 table.pixel[i] = (struct pixel_t *)malloc(table.width * sizeof(struct pixel_t));
 }
+for (int i = 0; i < table.height; i++) {
+for (int j = 0; j < table.width; j++) {
+table.pixel[i][j].red = 255;
+table.pixel[i][j].green = 255;
+table.pixel[i][j].blue = 255;
+table.pixel[i][j].alpha = 255;
+}
+}
 /* Create an image. */
 
 int sorted_c = 0;
 int swaps = 0;
 int* arr = (int*)malloc(number_lines * sizeof(int));
 arr = shuffle(number_lines, table.height);
-
+int sw = 0;
 for (counter = 1; counter < number_lines; counter++) {
 for (int f = counter; f > 0 && arr[f - 1] > arr[f]; f--) {
 double temp_value_d = arr[f - 1];
 arr[f - 1] = arr[f];
 arr[f] = temp_value_d;
 swaps++;
+sw = f;
 for (int i = 0; i < table.height; i++) {
 int index = 0;
 for (int j = 0; j < table.width; j++) {
@@ -206,17 +218,16 @@ temp.blue = 50;
 temp.alpha = 255;
 }
 else {
-temp.red = 0;
-temp.green = 0;
-temp.blue = 0;
-temp.alpha = 0;
+temp.red = 255;
+temp.green = 255;
+temp.blue = 255;
+temp.alpha = 255;
 }
 table.pixel[i][j] = temp;
 }
 }
-/* Write the image to a file 'table.png'. */
-
 }
+/* Write the image to a file 'table.png'. */
 char full_name[500];
 for (int m = 0; m < strlen(global_path); m++)
 full_name[m] = global_path[m];
@@ -236,10 +247,10 @@ table.pixel[i][j].blue = 0;
 table.pixel[i][j].alpha = 255;
 }
 else {
-table.pixel[i][j].red = 0;
-table.pixel[i][j].green = 0;
-table.pixel[i][j].blue = 0;
-table.pixel[i][j].alpha = 0;
+table.pixel[i][j].red = 255;
+table.pixel[i][j].green = 255;
+table.pixel[i][j].blue = 255;
+table.pixel[i][j].alpha = 255;
 }
 if (i >= arr[j / line_width] - 15 && i <= arr[j / line_width]) {
 table.pixel[i][j].red = 0;
@@ -249,6 +260,23 @@ table.pixel[i][j].alpha = 255;
 }
 }
 }
+for (int m = 0; m < arr[sw]; m++) {
+for (int wj = sw*line_width; wj < sw*line_width + line_width; wj++) {
+table.pixel[m][wj].red = 255;
+table.pixel[m][wj].green = 255;
+table.pixel[m][wj].blue = 0;
+table.pixel[m][wj].alpha = 255;
+}
+}
+//sw--;
+//for (int m = 0; m < arr[sw]; m++) {
+// for (int wj = sw*line_width; wj < sw*line_width + line_width; wj++) {
+// table.pixel[m][wj].red = 255;
+// table.pixel[m][wj].green = 255;
+// table.pixel[m][wj].blue = 0;
+// table.pixel[m][wj].alpha = 255;
+// }
+//}
 sorted_c++;
 char ex[5];
 int radix = 10;
@@ -268,11 +296,13 @@ if (i <= arr[j / line_width]) {
 table.pixel[i][j].red = 107;
 table.pixel[i][j].green = 142;
 table.pixel[i][j].blue = 50;
+table.pixel[i][j].alpha = 255;
 }
 else {
 table.pixel[i][j].red = 0;
 table.pixel[i][j].green = 0;
 table.pixel[i][j].blue = 0;
+table.pixel[i][j].alpha = 255;
 }
 }
 }
